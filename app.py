@@ -2,6 +2,7 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
+import base64
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
@@ -10,7 +11,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -70,7 +70,54 @@ def user_input(user_question):
 
 def main():
     st.set_page_config(page_title="Chat PDF")
-    st.header("Chat with PDF using Gemini💁")
+    st.header("Ask DocMan 🤖 ")
+
+   
+   # Encode the image to base64
+    def get_base64_image(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+
+    img_path = os.path.join("images", "Firefly give me an image of Artificial Intelligent bot searching for something document files, use d (2).jpg")
+    base64_img = get_base64_image(img_path)
+
+    # Use base64 image as background
+    page_bg_img = f"""
+    <style>
+    [data-testid="stAppViewContainer"] {{
+        background-image: url("data:image/jpg;base64,{base64_img}");
+        background-size: cover;
+    }}
+    </style>
+    """
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+    headerbg = f"""
+    <style>
+    [data-testid="stHeader"] {{
+        background-image: url("data:image/jpg;base64,{base64_img}");
+        background-size: cover;
+    }}
+    </style>
+    """
+    st.markdown(headerbg, unsafe_allow_html=True)
+
+    # Inject custom CSS to change the placeholder color to #339988
+    st.markdown(
+        """
+        <style>
+        /* Change the placeholder color */
+        .stTextInput input::placeholder {
+            color: #339988;
+        }
+        /* Change the text color */
+        .stTextInput input {
+            color: orange;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
     user_question = st.text_input("Ask a Question from the PDF Files")
 
