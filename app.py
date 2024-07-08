@@ -3,6 +3,7 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 import base64
+import logging
 
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import google.generativeai as genai
@@ -12,8 +13,13 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+
+# Load environment variables
 load_dotenv()
 
+# Configure Google Generative AI
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def get_pdf_text(pdf_docs):
@@ -67,19 +73,24 @@ def user_input(user_question):
         st.write("Reply: ", response["output_text"])
     except Exception as e:
         st.error(f"An error occurred: {e}")
+        logging.error(f"Error in user_input function: {e}")
 
 def main():
     st.set_page_config(page_title="Chat PDF")
     st.header("Ask DocMan 🤖 ")
 
-   
-   # Encode the image to base64
+    # Encode the image to base64
     def get_base64_image(image_path):
         with open(image_path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
-    img_path = os.path.join("images", "Firefly give me an image of Artificial Intelligent bot searching for something document files, use d (2).jpg")
-    base64_img = get_base64_image(img_path)
+    img_path = os.path.join("images", "your-image-file.jpg")
+    if os.path.exists(img_path):
+        base64_img = get_base64_image(img_path)
+    else:
+        st.error("Background image not found.")
+        logging.error("Background image not found.")
+        return
 
     # Use base64 image as background
     page_bg_img = f"""
@@ -128,11 +139,19 @@ def main():
         st.title("Menu:")
         pdf_docs = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=True)
         if st.button("Submit & Process"):
-            with st.spinner("Processing..."):
-                raw_text = get_pdf_text(pdf_docs)
-                text_chunks = get_text_chunks(raw_text)
-                get_vector_store(text_chunks)
-                st.success("Done")
+            if pdf_docs:
+                with st.spinner("Processing..."):
+                    try:
+                        raw_text = get_pdf_text(pdf_docs)
+                        text_chunks = get_text_chunks(raw_text)
+                        get_vector_store(text_chunks)
+                        st.success("Done")
+                    except Exception as e:
+                        st.error(f"An error occurred: {e}")
+                        logging.error(f"Error in processing PDFs: {e}")
+            else:
+                st.error("Please upload at least one PDF file.")
+                logging.error("No PDF files uploaded.")
 
 if __name__ == "__main__":
     main()
